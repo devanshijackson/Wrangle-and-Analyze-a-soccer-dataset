@@ -1,0 +1,56 @@
+Query 1:  To identify top 3 teams that improved over time.
+
+//This query was used to produce match_teamwin_count.csv
+SELECT  Strftime('%Y',Match.date) game_date,
+		CASE WHEN match.home_team_goal > match.away_team_goal THEN HTeam.team_long_name		
+		ELSE ATeam.team_long_name END AS winning_team_name,
+		COUNT(2) AS tot_win_count
+		
+FROM Match
+LEFT JOIN Team AS HTeam on HTeam.team_api_id = Match.home_team_api_id
+LEFT JOIN Team AS ATeam on ATeam.team_api_id = Match.away_team_api_id
+GROUP BY 1,2
+;
+
+
+Query 2:  To identity top five player with highest penalties and higest avg. overall score 
+//This query was used to produce player_pen_rating.csv
+SELECT Player.player_api_id, Player.player_name,
+		sum(Player_Attributes.penalties) tot_penalties, AVG(Player_Attributes.overall_rating) avg_overall_rating
+FROM Player_Attributes
+JOIN Player
+ON player.player_api_id = Player_Attributes.player_api_id
+GROUP BY 1;
+
+Query 3:  Which team attribute leads to most victories--used to produce team_att_wins.csv
+
+SELECT Team.team_api_id,
+	Team.team_long_name,
+	AVG(Team_Attributes.buildUpPlayDribbling),
+	AVG(Team_Attributes.buildUpPlayPassing),
+	AVG(Team_Attributes.buildUpPlaySpeed),
+	AVG(Team_Attributes.chanceCreationCrossing),
+	AVG(Team_Attributes.chanceCreationPassing),
+	AVG(Team_Attributes.chanceCreationShooting),
+	AVG(Team_Attributes.defenceAggression),
+	AVG(Team_Attributes.defencePressure),
+	AVG(Team_Attributes.defenceTeamWidth),
+	Win_teamid_count.Tot_win_count
+FROM Team
+JOIN Team_Attributes ON Team.team_api_id = Team_Attributes.team_api_id
+JOIN Win_teamid_count ON Team.team_api_id = Win_teamid_count.winning_team_id
+GROUP BY 1;
+
+CREATE TABLE Win_teamid_count AS
+SELECT CASE WHEN match.home_team_goal > match.away_team_goal THEN HTeam.team_api_id	
+		ELSE ATeam.team_api_id END AS winning_team_id,
+		COUNT(1) AS Tot_win_count
+FROM match
+JOIN Team AS HTeam on HTeam.team_api_id = match.home_team_api_id
+JOIN Team AS ATeam on ATeam.team_api_id = Match.away_team_api_id
+GROUP BY 1;
+
+Query 4:Used to extract data to answer two questions:has goal difference changed over time and has home advantage changed over time.
+SELECT Country.name AS country_name, Strftime('%Y',Match.date) game_date,home_team_goal, away_team_goal 
+FROM Match LEFT JOIN Country ON match.country_id = Country.id;
+
